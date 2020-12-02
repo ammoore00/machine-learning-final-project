@@ -7,7 +7,7 @@ from src.load import load_data_from_file
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers.convolutional import Conv2D
 from tensorflow.python.keras.layers.pooling import MaxPool2D
-from tensorflow.python.keras.layers.core import Flatten, Dense
+from tensorflow.python.keras.layers.core import Flatten, Dense, Dropout
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD
 
 def normalize(train, test):
@@ -19,14 +19,36 @@ def normalize(train, test):
     
     return train_norm, test_norm
 
-def build_model():
+def basic_model():
     model = Sequential()
     
     model.add(Conv2D(32, (3,3), activation="relu", input_shape=(28, 28, 1)))
     model.add(MaxPool2D((2, 2)))
     model.add(Flatten())
     model.add(Dense(100, activation='relu'))
-    model.add(Dense(26, activation='softmax'))
+    model.add(Dense(62, activation='softmax'))
+    
+    opt = SGD(lr=0.01, momentum=0.9)
+    model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+    
+    return model
+
+def complex_model():
+    model = Sequential()
+    
+    model.add(Conv2D(32, (3,3), activation="relu", input_shape=(28, 28, 1)))
+    model.add(MaxPool2D((2, 2)))
+    model.add(Conv2D(64, (3,3), activation="relu"))
+    model.add(MaxPool2D((2, 2)))
+    model.add(Conv2D(128, (3,3), activation="relu"))
+    model.add(MaxPool2D((2, 2)))
+    model.add(Flatten())
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(100, activation='relu'))
+    model.add(Dense(62, activation='softmax'))
     
     opt = SGD(lr=0.01, momentum=0.9)
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
@@ -34,7 +56,7 @@ def build_model():
     return model
 
 # evaluate a model using k-fold cross-validation
-def evaluate_model(x, y, model, n_folds=5):
+def cross_validate(x, y, model, n_folds=3):
     scores, histories = list(), list()
     # prepare cross validation
     kfold = KFold(n_folds, shuffle=True, random_state=1)
@@ -57,14 +79,18 @@ def evaluate_model(x, y, model, n_folds=5):
 def summarize_diagnostics(histories):
     for i in range(len(histories)):
         # plot loss
-        plt.subplot(2, 1, 1)
-        plt.title('Cross Entropy Loss')
+        plt.subplot(2, 2, 1)
+        plt.title('Cross Entropy Loss Train')
         plt.plot(histories[i].history['loss'], color='blue', label='train')
+        plt.subplot(2, 2, 2)
+        plt.title('Cross Entropy Loss Test')
         plt.plot(histories[i].history['val_loss'], color='orange', label='test')
         # plot accuracy
-        plt.subplot(2, 1, 2)
-        plt.title('Classification Accuracy')
+        plt.subplot(2, 2, 3)
+        plt.title('Classification Accuracy Train')
         plt.plot(histories[i].history['accuracy'], color='blue', label='train')
+        plt.subplot(2, 2, 4)
+        plt.title('Classification Accuracy Test')
         plt.plot(histories[i].history['val_accuracy'], color='orange', label='test')
     plt.show()
 
@@ -75,11 +101,20 @@ def summarize_performance(scores):
     plt.boxplot(scores)
     plt.show()
 
+def evaluate_kfold(x_train, y_train):
+    scores, histories = cross_validate(x_train, y_train, complex_model())
+    
+    summarize_diagnostics(histories)
+    summarize_performance(scores)
+    
+def build(x_train, y_train):
+    model = complex_model()
+    history = model.fit(x_train, y_train)
+    print(history.history['accuracy'])
+
 if __name__ == "__main__":
     x_train_raw, y_train, x_test_raw, y_test = load_data_from_file()
     x_train, x_test = normalize(x_train_raw, x_test_raw)
     
-    scores, histories = evaluate_model(x_train, y_train, build_model())
-    
-    summarize_diagnostics(histories)
-    summarize_performance(scores)
+    build(x_train, y_train)
+    evaluate_kfold(x_train, y_train)

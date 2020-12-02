@@ -10,7 +10,7 @@ from extra_keras_datasets import emnist
 # 
 # Imported to keras by Christian Versloot at https://github.com/christianversloot/extra_keras_datasets
 # Provided under MIT liscense
-(input_train, target_train), (input_test, target_test) = emnist.load_data(type='letters')
+(input_train, target_train), (input_test, target_test) = emnist.load_data(type='byclass')
 
 # Saves data to avoid needing to repeatedly load the dataset which can take minutes every time
 # Reshapes 3D inputs to 2d to write to a file, original dimensions saved for later
@@ -45,7 +45,7 @@ def load_data_from_file():
     target_train = [y - 1 for y in target_train]
     target_test = [y - 1 for y in target_test]
     
-    target_train_cat = to_categorical(target_train)
-    target_test_cat = to_categorical(target_test)
+    target_train_cat = to_categorical(target_train, num_classes=62)
+    target_test_cat = to_categorical(target_test, num_classes=62)
     
     return input_train, target_train_cat, input_test, target_test_cat
