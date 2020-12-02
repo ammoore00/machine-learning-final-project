@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 from numpy import mean, std
 from sklearn.model_selection import KFold
@@ -81,16 +82,20 @@ def summarize_diagnostics(histories):
         # plot loss
         plt.subplot(2, 2, 1)
         plt.title('Cross Entropy Loss Train')
+        plt.ylim([0, 1.0])
         plt.plot(histories[i].history['loss'], color='blue', label='train')
         plt.subplot(2, 2, 2)
         plt.title('Cross Entropy Loss Test')
+        plt.ylim([0, 1.0])
         plt.plot(histories[i].history['val_loss'], color='orange', label='test')
         # plot accuracy
         plt.subplot(2, 2, 3)
         plt.title('Classification Accuracy Train')
+        plt.ylim([0.7, 1.0])
         plt.plot(histories[i].history['accuracy'], color='blue', label='train')
         plt.subplot(2, 2, 4)
         plt.title('Classification Accuracy Test')
+        plt.ylim([0.7, 1.0])
         plt.plot(histories[i].history['val_accuracy'], color='orange', label='test')
     plt.show()
 
@@ -113,8 +118,10 @@ def build(x_train, y_train):
     print(history.history['accuracy'])
 
 if __name__ == "__main__":
+    t = time.time
     x_train_raw, y_train, x_test_raw, y_test = load_data_from_file()
     x_train, x_test = normalize(x_train_raw, x_test_raw)
     
-    build(x_train, y_train)
+    #build(x_train, y_train)
     evaluate_kfold(x_train, y_train)
+    print("Time:", time.time - t)
